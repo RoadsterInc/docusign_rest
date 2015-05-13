@@ -6,6 +6,7 @@ module DocusignRest
     # Define the same set of accessors as the DocusignRest module
     attr_accessor *Configuration::VALID_CONFIG_KEYS
     attr_accessor :docusign_authentication_headers, :acct_id
+    attr :do_logging
     attr_accessor :previous_call_log
 
     def initialize(options={})
@@ -40,6 +41,7 @@ module DocusignRest
       @acct_id = account_id
 
       #initialize the log cache
+      @do_logging = false
       @previous_call_log = []
     end
 
@@ -143,9 +145,9 @@ module DocusignRest
 
       request = Net::HTTP::Post.new(uri.request_uri, content_type)
       request.body = "grant_type=password&client_id=#{integrator_key}&username=#{email}&password=#{password}&scope=api"
-      
+
       http = initialize_net_http_ssl(uri)
-      response = http.request(request)
+      response = do_request(http, request)
       generate_log(request, response, uri)
       JSON.parse(response.body)
     end
@@ -173,7 +175,7 @@ module DocusignRest
       uri = build_uri('/login_information')
       request = Net::HTTP::Get.new(uri.request_uri, headers(options[:headers]))
       http = initialize_net_http_ssl(uri)
-      response = http.request(request)
+      response = do_request(http, request)
       generate_log(request, response, uri)
       response
     end
@@ -622,7 +624,7 @@ module DocusignRest
                   uri, post_body, file_params, headers(options[:headers])
                 )
 
-      response = http.request(request)
+      response = do_request(http, request)
       generate_log(request, response, uri)
       JSON.parse(response.body)
     end
@@ -682,7 +684,7 @@ module DocusignRest
                   uri, post_body, file_params, headers(options[:headers])
                 )
 
-      response = http.request(request)
+      response = do_request(http, request)
       generate_log(request, response, uri)
       JSON.parse(response.body)
     end
@@ -697,7 +699,7 @@ module DocusignRest
 
       http = initialize_net_http_ssl(uri)
       request = Net::HTTP::Get.new(uri.request_uri, headers(content_type))
-      response = http.request(request)
+      response = do_request(http, request)
       generate_log(request, response, uri)
       JSON.parse(response.body)
     end
@@ -746,7 +748,7 @@ module DocusignRest
       request = Net::HTTP::Post.new(uri.request_uri, headers(content_type))
       request.body = post_body
 
-      response = http.request(request)
+      response = do_request(http, request)
       generate_log(request, response, uri)
       JSON.parse(response.body)
     end
@@ -791,7 +793,7 @@ module DocusignRest
       request = Net::HTTP::Post.new(uri.request_uri, headers(content_type))
       request.body = post_body
 
-      response = http.request(request)
+      response = do_request(http, request)
       generate_log(request, response, uri)
       JSON.parse(response.body)
     end
@@ -814,7 +816,7 @@ module DocusignRest
 
       request = Net::HTTP::Post.new(uri.request_uri, headers(content_type))
 
-      response = http.request(request)
+      response = do_request(http, request)
       generate_log(request, response, uri)
       JSON.parse(response.body)
     end
@@ -850,7 +852,7 @@ module DocusignRest
       request = Net::HTTP::Post.new(uri.request_uri, headers(content_type))
       request.body = post_body
 
-      response = http.request(request)
+      response = do_request(http, request)
       generate_log(request, response, uri)
       JSON.parse(response.body)
     end
@@ -878,7 +880,7 @@ module DocusignRest
       request = Net::HTTP::Post.new(uri.request_uri, headers(content_type))
       request.body = post_body
 
-      response = http.request(request)
+      response = do_request(http, request)
       generate_log(request, response, uri)
       parsed_response = JSON.parse(response.body)
       parsed_response['url']
@@ -906,7 +908,7 @@ module DocusignRest
 
       http = initialize_net_http_ssl(uri)
       request = Net::HTTP::Get.new(uri.request_uri, headers(content_type))
-      response = http.request(request)
+      response = do_request(http, request)
       generate_log(request, response, uri)
       JSON.parse(response.body)
     end
@@ -923,7 +925,7 @@ module DocusignRest
 
       http = initialize_net_http_ssl(uri)
       request = Net::HTTP::Get.new(uri.request_uri, headers(content_type))
-      response = http.request(request)
+      response = do_request(http, request)
       generate_log(request, response, uri)
       JSON.parse(response.body)
     end
@@ -951,7 +953,7 @@ module DocusignRest
 
       http     = initialize_net_http_ssl(uri)
       request  = Net::HTTP::Get.new(uri.request_uri, headers(content_type))
-      response = http.request(request)
+      response = do_request(http, request)
       generate_log(request, response, uri)
       JSON.parse(response.body)
     end
@@ -984,7 +986,7 @@ module DocusignRest
 
       http = initialize_net_http_ssl(uri)
       request = Net::HTTP::Get.new(uri.request_uri, headers(content_type))
-      response = http.request(request)
+      response = do_request(http, request)
       generate_log(request, response, uri)
       return response.body if options[:return_stream]
 
@@ -1012,7 +1014,7 @@ module DocusignRest
 
       http     = initialize_net_http_ssl(uri)
       request  = Net::HTTP::Get.new(uri.request_uri, headers(content_type))
-      response = http.request(request)
+      response = do_request(http, request)
       generate_log(request, response, uri)
       JSON.parse(response.body)
     end
@@ -1044,7 +1046,7 @@ module DocusignRest
 
       http = initialize_net_http_ssl(uri)
       request = Net::HTTP::Get.new(uri.request_uri, headers(content_type))
-      response = http.request(request)
+      response = do_request(http, request)
       generate_log(request, response, uri)
       return response.body if options[:return_stream]
 
@@ -1087,7 +1089,7 @@ module DocusignRest
       http = initialize_net_http_ssl(uri)
       request = Net::HTTP::Put.new(uri.request_uri, headers(content_type))
       request.body = post_body
-      response = http.request(request)
+      response = do_request(http, request)
       generate_log(request, response, uri)
       response
     end
@@ -1111,7 +1113,7 @@ module DocusignRest
 
       http = initialize_net_http_ssl(uri)
       request = Net::HTTP::Get.new(uri.request_uri, headers(content_type))
-      response = http.request(request)
+      response = do_request(http, request)
       generate_log(request, response, uri)
       JSON.parse(response.body)
     end
@@ -1154,7 +1156,7 @@ module DocusignRest
 
       http = initialize_net_http_ssl(uri)
       request = Net::HTTP::Get.new(uri.request_uri, headers(content_type))
-      response = http.request(request)
+      response = do_request(http, request)
       generate_log(request, response, uri)
       JSON.parse(response.body)
     end
@@ -1172,7 +1174,7 @@ module DocusignRest
       http = initialize_net_http_ssl(uri)
       request = Net::HTTP::Post.new(uri.request_uri, headers(content_type))
       request.body = post_body
-      response = http.request(request)
+      response = do_request(http, request)
       generate_log(request, response, uri)
       JSON.parse(response.body)
     end
@@ -1200,7 +1202,7 @@ module DocusignRest
 
       http = initialize_net_http_ssl(uri)
       request = Net::HTTP::Delete.new(uri.request_uri, headers(content_type))
-      response = http.request(request)
+      response = do_request(http, request)
       generate_log(request, response, uri)
       json = response.body
       json = '{}' if json.nil? || json == ''
@@ -1220,7 +1222,7 @@ module DocusignRest
 
       http = initialize_net_http_ssl(uri)
       request = Net::HTTP::Get.new(uri.request_uri, headers({ 'Content-Type' => 'application/json' }))
-      response = http.request(request)
+      response = do_request(http, request)
       generate_log(request, response, uri)
       JSON.parse(response.body)
     end
@@ -1236,7 +1238,7 @@ module DocusignRest
 
       http = initialize_net_http_ssl(uri)
       request = Net::HTTP::Get.new(uri.request_uri, headers({ 'Content-Type' => 'application/json' }))
-      response = http.request(request)
+      response = do_request(http, request)
       generate_log(request, response, uri)
       JSON.parse(response.body)
     end
@@ -1253,7 +1255,7 @@ module DocusignRest
 
       http = initialize_net_http_ssl(uri)
       request = Net::HTTP::Get.new(uri.request_uri, headers(content_type))
-      response = http.request(request)
+      response = do_request(http, request)
       generate_log(request, response, uri)
       JSON.parse(response.body)
     end
@@ -1280,7 +1282,7 @@ module DocusignRest
       request = Net::HTTP::Delete.new(uri.request_uri, headers(content_type))
       request.body = post_body
 
-      response = http.request(request)
+      response = do_request(http, request)
       generate_log(request, response, uri)
       JSON.parse(response.body)
     end
@@ -1306,12 +1308,19 @@ module DocusignRest
       http = initialize_net_http_ssl(uri)
       request = Net::HTTP::Put.new(uri.request_uri, headers(content_type))
       request.body = post_body
-      response = http.request(request)
+      response = do_request(http, request)
       generate_log(request, response, uri)
       response
     end
 
     private
+
+
+    def do_request(http, request)
+      http.request(request).tap do |response|
+        response.value    # raise if there was an HTTP error
+      end
+    end
 
     # Private: Generates a standardized log of the request and response pair
     # to and from DocuSign for logging and API Certification.
@@ -1320,6 +1329,8 @@ module DocusignRest
     # envelope = connection.create_envelope_from_document(doc)
     # connection.previous_call_log.each {|line| logger.debug line }
     def generate_log(request, response, uri)
+      return if !@do_logging
+
       log = ['--DocuSign REQUEST--']
       log << "#{request.method} #{uri.to_s}"
       request.each_capitalized{ |k,v| log << "#{k}: #{v.gsub(/(?<="Password":")(.+?)(?=")/, '[FILTERED]')}" }
