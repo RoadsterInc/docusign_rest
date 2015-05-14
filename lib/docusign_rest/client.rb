@@ -241,6 +241,15 @@ module DocusignRest
           template_role[:emailNotification] = signer[:email_notification]
         end
 
+        if signer[:access_code]
+          template_role[:accessCode] = signer[:access_code]
+        end
+        if signer[:sms_auth_number]
+          template_role[:smsAuthentication] = {
+            senderProvidedNumbers: [ signer[:sms_auth_number] ]
+          }
+        end
+
         template_role['clientUserId'] = (signer[:client_id] || signer[:email]).to_s if signer[:embedded] == true
         template_roles << template_role
       end
