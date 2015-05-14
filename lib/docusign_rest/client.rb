@@ -6,7 +6,7 @@ module DocusignRest
     # Define the same set of accessors as the DocusignRest module
     attr_accessor *Configuration::VALID_CONFIG_KEYS
     attr_accessor :docusign_authentication_headers, :acct_id
-    attr :do_logging
+    attr_accessor :do_logging
     attr_accessor :previous_call_log
 
     def initialize(options={})
